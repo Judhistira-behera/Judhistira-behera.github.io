@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Judhistira Behera: Operations Associate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FFFFFF;--ink:#1A1A1A;--muted:#5C5C5C;--line:#E4E4E4;--soft:#F5F5F5;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.65 "Instrument Sans",system-ui,sans-serif}
+h1,h2,h3{font-family:"Bricolage Grotesque","Instrument Sans",system-ui,sans-serif;line-height:1.15;margin:0}
+a{color:var(--ink);text-underline-offset:3px}
+a:focus-visible,summary:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.wrap{max-width:760px;margin:0 auto;padding:56px 22px 64px}
+h1{font-size:clamp(40px,8vw,64px);font-weight:800;letter-spacing:-.03em}
+.role{font-size:20px;color:var(--muted);margin:12px 0 18px}
+.links{display:flex;gap:20px;flex-wrap:wrap;font-weight:500}
+section{margin-top:56px}
+h2{font-size:28px;font-weight:800;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+p{margin:0 0 14px}
+details{border:1px solid var(--line);border-radius:10px;margin-bottom:12px}
+summary{cursor:pointer;list-style:none;padding:18px 20px;display:flex;justify-content:space-between;gap:16px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-size:26px;line-height:1;flex:none}
+details[open] summary::after{content:"\2212"}
+summary h3{font-size:20px;font-weight:600}
+summary span{display:block;color:var(--muted);font-size:15px;margin-top:4px}
+.in{padding:0 20px 20px}
+.in h4{margin:14px 0 4px;font-size:16px}
+.in p,.in ul{margin:0 0 8px;font-size:16px}
+.in ul{padding-left:20px}
+.code{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+.code summary{padding:6px 0;font-weight:600;font-size:15px}
+.code summary::after{font-size:20px}
+pre{margin:8px 0 0;background:var(--soft);border-radius:8px;padding:14px;overflow-x:auto;font:13px/1.55 ui-monospace,Menlo,Consolas,monospace}
+.jobs p{margin:0 0 14px}.jobs small{color:var(--muted)}
+ul.plain{padding-left:20px;margin:0}ul.plain li{margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>Judhistira Behera</h1>
+<p class="role">Operations Associate. I automate repetitive class operations with Google Apps Script.</p>
+<div class="links"><a href="mailto:judhistirabehera879@gmail.com">Email</a><a href="tel:+916370116526">+91 6370116526</a><a href="https://linkedin.com/in/judhistirabehera-b58016213">LinkedIn</a></div>
+</header>
+
+<main>
+<section>
+<h2>About</h2>
+<p>I have 4+ years of experience in EdTech and e-commerce operations. At LeapScholar I coordinate sales, trainers and leadership across IELTS, PTE, DET and DMAT. My automations have saved 8+ hours a week.</p>
+</section>
+
+<section>
+<h2>Automation projects</h2>
+
+<details open>
+<summary><div><h3>Class recordings that save themselves</h3><span>After class: Meet recordings go to the right batch folder.</span></div></summary>
+<div class="in">
+<h4>Problem</h4><p>Students kept asking for recordings. Meet saves them in the host’s Drive, so someone had to find, move and share each one by hand.</p>
+<h4>What I built</h4><p>A script that checks Gmail every 15 minutes, matches each “Meeting records” email to its batch, and saves only the video into that batch’s folder. Each folder has one view link for students.</p>
+<ul><li>Skips transcripts and attendance sheets.</li><li>Moves the file, or copies it when another trainer owns it.</li><li>Labels each email Saved or NeedsReview, so nothing repeats or gets lost.</li></ul>
+<h4>Result</h4><p>Students get recordings within minutes, and the ops team no longer handles requests.</p>
+<details class="code"><summary>View code</summary>
+<pre>const MAPPINGS = [
+  { keyword: "Batch A 7AM", folderName: "Batch A Recordings" },
+  { keyword: "Batch B 8PM", folderName: "Batch B Recordings" }
+];
+
+function saveRecordings() {
+  const saved = getOrCreateLabel("Recording-Saved");
+  const review = getOrCreateLabel("Recording-NeedsReview");
+
+  MAPPINGS.forEach(m =&gt; {
+    const folder = getOrCreateFolder(m.folderName);
+    const threads = GmailApp.search(
+      `"${m.keyword}" -label:Recording-Saved -label:Recording-NeedsReview`, 0, 50);
+
+    threads.forEach(thread =&gt; {
+      let found = false;
+      thread.getMessages().forEach(msg =&gt; {
+        Object.keys(extractDriveFileIds(msg.getBody())).forEach(id =&gt; {
+          const file = DriveApp.getFileById(id);
+          if (file.getMimeType().indexOf("video") !== 0) return; // video only
+          try { file.moveTo(folder); }                            // if we own it
+          catch (e) { file.makeCopy(file.getName(), folder); }    // otherwise copy
+          found = true;
+        });
+      });
+      thread.addLabel(found ? saved : review);
+    });
+  });
+}
+// helpers: getOrCreateLabel, getOrCreateFolder, extractDriveFileIds (regex)
+// trigger: runs every 15 minutes</pre></details>
+</div></details>
+
+<details>
+<summary><div><h3>One-click student onboarding emails</h3><span>Before class: branded welcome emails from a Google Sheet.</span></div></summary>
+<div class="in">
+<h4>Problem</h4><p>Each new student needed an email with trainer, timing, start date and class links. Writing them by hand was slow, uneven and easy to send twice.</p>
+<h4>What I built</h4><p>A custom menu in Google Sheets. The team fills the Class Data sheet and clicks Send Onboarding Emails. Each student gets a HTML email with a schedule table, a Join Class button and a group link.</p>
+<ul><li>Rows marked Sent are skipped, so no one is emailed twice.</li><li>A timestamp is saved for every email.</li><li>A plain-text version is included for email apps that cannot show HTML.</li></ul>
+<h4>Result</h4><p>Every student gets the same professional welcome, sent in one click by anyone on the team.</p>
+<details class="code"><summary>View code</summary>
+<pre>function sendOnboardingEmails() {
+  const sheet = SpreadsheetApp.getActive().getSheetByName("Class Data");
+  const data = sheet.getDataRange().getValues();
+  const headers = data[1];
+  const statusCol = headers.indexOf("Status") + 1;
+  const timeCol = headers.indexOf("Sent Timestamp") + 1;
+
+  for (let i = 2; i &lt; data.length; i++) {
+    const rec = {};
+    headers.forEach((h, c) =&gt; rec[h] = data[i][c]);
+    if (!rec["Student Email"] || rec["Status"] === "Sent") continue; // no duplicates
+
+    const options = {
+      to: rec["Student Email"],
+      subject: `Welcome: your onboarding details (${rec["Student Name"]})`,
+      body: buildPlainBody(rec),
+      htmlBody: buildHtmlBody(rec)
+    };
+    if (rec["CC Email"]) options.cc = rec["CC Email"];
+    MailApp.sendEmail(options);
+
+    sheet.getRange(i + 1, statusCol).setValue("Sent");
+    sheet.getRange(i + 1, timeCol).setValue(new Date());
+  }
+}
+// buildHtmlBody / buildPlainBody create the email from the row</pre></details>
+</div></details>
+
+<details>
+<summary><div><h3>Trainer leave alerts</h3><span>During delivery: the team knows about leave the moment it is filed.</span></div></summary>
+<div class="in">
+<h4>Problem</h4><p>Leave news travelled by scattered messages or daily sheet checks, so batch owners found out late.</p>
+<h4>What I built</h4><p>A Google Form wired to a script. When a trainer submits it, the pod leads and ops team get an email with the name, dates, timings and reason. Replies go straight to the trainer.</p>
+<h4>Result</h4><p>Daily manual sheet checks are gone, and replacements can be planned early.</p>
+<details class="code"><summary>View code</summary>
+<pre>const CONFIG = {
+  FIELDS: { email: "Email address", startDate: "Leave Start Date",
+            endDate: "Leave End Date", startTime: "Start Time",
+            endTime: "End Time", reason: "Reason" },
+  NOTIFY: ["pod.lead@company.com", "ops.team@company.com"]
+};
+
+function onFormSubmit(e) {
+  const get = f =&gt; (e.namedValues[f] &amp;&amp; e.namedValues[f][0]) || "N/A";
+  const email = get(CONFIG.FIELDS.email);
+  const first = email.split("@")[0].split(".")[0];
+  const name = first.charAt(0).toUpperCase() + first.slice(1);
+
+  const body =
+    `Hi Team,\n\nA trainer has submitted a leave request:\n\n` +
+    `Name: ${name}\nSubmitted by: ${email}\n` +
+    `Leave Start: ${get(CONFIG.FIELDS.startDate)} (${get(CONFIG.FIELDS.startTime)})\n` +
+    `Leave End: ${get(CONFIG.FIELDS.endDate)} (${get(CONFIG.FIELDS.endTime)})\n` +
+    `Reason: ${get(CONFIG.FIELDS.reason)}`;
+
+  MailApp.sendEmail({
+    to: CONFIG.NOTIFY.join(","),
+    subject: `Leave form filled by ${name}`,
+    body: body,
+    replyTo: email
+  });
+}</pre></details>
+</div></details>
+</section>
+
+<section>
+<h2>More results</h2>
+<ul class="plain">
+<li><b>Payment verification tracker:</b> confirms 100+ payments a day in real time, replacing 1 to 2 minutes of manual checking each (8+ hours a week saved).</li>
+<li><b>Metabase to Google Sheets pipeline:</b> SQL and Apps Script sync demo data so sales log remarks in the sheet, which made demo-to-enrolment analysis possible.</li>
+<li><b>PTE demo attendance:</b> raised daily attendance from 6 to 35–38 (about 10% to 60% of 60 bookings), contributing to a 10% PTE revenue increase in the first month.</li>
+<li><b>Trainer utilisation tracking:</b> hours per day, week and month for capacity planning and payout control.</li>
+<li><b>Daily batch operations:</b> 20+ batches a day, tickets in Freshdesk and Robylon.ai, Postman and Jenkins for batch and scorecard updates.</li>
+</ul>
+</section>
+
+<section class="jobs">
+<h2>Experience</h2>
+<p><b>Operations Associate, LeapScholar</b><br><small>Oct 2025 to present. Promoted from Student Success Manager.</small></p>
+<p><b>Student Success Manager, LeapScholar</b><br><small>Sep 2024 to Oct 2025. Ran IELTS for MENA, onboarding 100+ students a month.</small></p>
+<p><b>Operational Executive, Startek</b><br><small>Aug 2022 to Aug 2024. Supported 50+ sellers a day.</small></p>
+<p><b>Marketing Intern, Epitome TRC</b><br><small>May 2021 to Aug 2021</small></p>
+<p><small>MBA (HR and Marketing), GIETU. BSc, Gunupur Degree College.</small></p>
+</section>
+
+<section>
+<h2>Skills</h2>
+<p>Google Apps Script, Gmail, Drive, Sheets and Forms automation, SQL, Metabase, Postman (API), Jenkins, Excel, MIS reporting, SOPs, root cause analysis, Freshdesk, Robylon.ai, LeadSquared, Slack.</p>
+</section>
+
+<section>
+<h2>Contact</h2>
+<p><a href="mailto:judhistirabehera879@gmail.com">judhistirabehera879@gmail.com</a><br><a href="tel:+916370116526">+91 6370116526</a><br><a href="https://linkedin.com/in/judhistirabehera-b58016213">LinkedIn</a></p>
+</section>
+</main>
+</div>
+</body>
+</html>
